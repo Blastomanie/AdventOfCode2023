@@ -42,6 +42,21 @@ struct entry {
     }
 };
 
+struct nodeEntry {
+    int count;
+    entry node;
+
+    bool operator==(const nodeEntry &a) const {
+        return count == a.count && node == a.node;
+    }
+
+    bool operator<(const nodeEntry &a) const {
+        if (count != a.count) return count < a.count;
+        return node < a.node;
+    }
+
+};
+
 int getIndex(std::vector<std::pair<int, entry>> nodes) {
     int min = std::numeric_limits<int>::max();
     int j = 0;
@@ -58,12 +73,11 @@ int dijkstra(std::vector<std::vector<int>> blocks) {
     std::pair<int, int> start = {0, 0};
     std::pair<int, int> stop = {blocks.size() - 1, blocks[0].size() - 1};
     std::map<entry, int> distances {{{start, {0, 0}, 0}, 0}};
-    std::vector<std::pair<int, entry>> nodes {{{0, {start, {0, 0}, 0}}}};
+    std::vector<nodeEntry> nodes {{{0, {start, {0, 0}, 0}}}};
     while (nodes.size() > 0) {
-        int index = getIndex(nodes);
-        int dist = nodes[index].first;
-        entry node1 = nodes[index].second;
-        nodes.erase(nodes.begin() + index);
+        int dist = nodes[0].count;
+        entry node1 = nodes[0].node;
+        nodes.erase(nodes.begin());
         if (node1.coords == stop) return dist;
         if (node1.dir != start && node1.count + 1 <= 10) {
             entry node2 = node1;
@@ -74,7 +88,11 @@ int dijkstra(std::vector<std::vector<int>> blocks) {
                 int d2 = distances.find(node2) == distances.end() ? std::numeric_limits<int>::max() : distances[node2];
                 if (d2 > dist + blocks[node2.coords.first][node2.coords.second]) {
                     distances[node2] = dist + blocks[node2.coords.first][node2.coords.second];
-                    nodes.push_back({dist + blocks[node2.coords.first][node2.coords.second], node2});
+                    nodeEntry val;
+                    val.count = dist + blocks[node2.coords.first][node2.coords.second];
+                    val.node = node2;
+                    std::vector<nodeEntry>::iterator it = std::lower_bound(nodes.begin(), nodes.end(), val);
+                    nodes.insert(it, val);
                 }
             }
         }
@@ -92,7 +110,11 @@ int dijkstra(std::vector<std::vector<int>> blocks) {
                 }
                 if (d2 > dist + d) {
                     distances[node2] = dist + d;
-                    nodes.push_back({dist + d, node2});
+                    nodeEntry val;
+                    val.count = dist + blocks[node2.coords.first][node2.coords.second];
+                    val.node = node2;
+                    std::vector<nodeEntry>::iterator it = std::lower_bound(nodes.begin(), nodes.end(), val);
+                    nodes.insert(it, val);
                 }
             }
         }
@@ -102,7 +124,7 @@ int dijkstra(std::vector<std::vector<int>> blocks) {
 
 int main() {
     std::fstream input;
-    input.open("input.txt", std::ios::in);
+    input.open("test.txt", std::ios::in);
     std::string line;
     std::vector<std::vector<int>> blocks;
     if (input.is_open()) {
@@ -113,4 +135,14 @@ int main() {
     input.close();
 
     std::cout << dijkstra(blocks);
+
+    // std::vector<int> test = {};
+    // int val = 4;
+    // auto it = std::lower_bound(test.begin(), test.end(), val);
+    // test.insert(it, val);
+
+    // for (int j : test) {
+    //     std::cout << j << " ";
+    // }
+
 }
